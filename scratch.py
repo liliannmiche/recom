@@ -501,6 +501,24 @@ class song(object):
         that song in the database.
 
         """
+        release = discogs.MasterRelease(self.release_id)
+        release_data = release.data
+        genre = ['None']
+        style = ['None']
+        tempo = ['None']
+        year = ['None']
+        country = ['None']
+        if 'genres' in release_data.keys():
+            genre = release_data.genres
+        if 'styles' in release_data.keys():
+            style = release_data.styles
+        if 'tempo' in release_data.keys():
+            tempo = release_data.tempo
+        if 'year' in release_data.keys():
+            year = release_data.year
+        if 'country' in release_data.keys():
+            country = release_data.year
+
         return genre, style, tempo, year, country
 
 
