@@ -5,9 +5,13 @@ User State Module for the Recommendation System.
 @author: ymiche
 @version: 0.1
 """
+from __future__ import with_statement # Only for Python 2.5
 
 import numpy as np
 from geopy.distance import vincenty
+import cPickle as pkl
+import gzip,contextlib
+
 
 import discogs_client as discogs
 discogs.user_agent = 'MyRecommendationSystem/0.1'
@@ -33,12 +37,13 @@ class UserState(object):
     def __init__(self, imei, activity, location, timestamp, song):
         # Verify some things about the arguments
         # The IMEI should be a 15 digit number
-        if not isinstance(imei, int):
-            raise Exception('Given IMEI is not an integer.')
-        if np.floor(np.log10(imei)) != 14:
+        if not isinstance(imei, str):
+            raise Exception('Given IMEI is not a string.')
+        if len(imei) != 15:
             raise Exception('Given IMEI has not the proper length \
                                                         (15 digits).')
         # The activity should belong to the list of possible activities
+
         if activity not in ACTIVITIES.keys():
             raise Exception('Given activity is not recognized.')
         # The location needs to be a couple of floats
@@ -66,6 +71,12 @@ class UserState(object):
         """
         return distance_user_states(self, userstate2)
 
+    def write(self):
+        """
+        Writes the user state to the disk.
+        """
+        with contextlib.closing(gzip.GzipFile(str(self.imei)+'.pkl.gz', 'ab')) as write_file:
+            pkl.dump(self, write_file)
 
 
 def distance_user_states(userstate1, userstate2):
@@ -98,6 +109,7 @@ def distance_user_states(userstate1, userstate2):
                }
 
     return distance
+
 
 def distance_locations(location1, location2):
     """
@@ -175,8 +187,7 @@ def distance_timestamps(timestamp1, timestamp2):
 
 # Global definitions
 # Activities of a user
-ACTIVITIES = {'STILL':      0,
-              'ON_FOOT':    1,
-              'ON_BICYCLE': 2,
-              'IN_VEHICLE': 3}
-
+ACTIVITIES = {'Standing':   0,
+              'Walking':    1,
+              'Running': 2
+              }

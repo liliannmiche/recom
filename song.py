@@ -58,7 +58,7 @@ class Song(object):
         self.query_string = query_string
         self.release_id = self.look_up_release_id()
         self.genre, self.style, self.tempo, self.year, self.country = \
-            self.look_up_details_by_master_id()
+            self.look_up_details_by_release_id()
         self.sens_me_values = self.sens_me()
 
     def look_up_release_id(self):
@@ -82,31 +82,35 @@ class Song(object):
         Returns the master_id associated with the query.
         """
         my_search = discogs.Search(self.query_string)
+        if __debug__:
+            print 'Looking up release id.'
         release = my_search.results()[0]
         return release.data['id']
 
-    def look_up_details_by_master_id(self):
+    def look_up_details_by_release_id(self):
         # FIXME : The current strategy is to use only one style and genre
         # for the distance calculations.
         """
-        Look up all the available details of the given master_id and affect
+        Look up all the available details of the given release_id and affect
         to the current song object.
 
         Parameters
         ----------
-        master_id           : int
+        release_id           : int
                             The internal Discogs ID for identifying the
                             release.
 
         Returns
         -------
         Returns the genre, style, tempo, year and country of the associated
-        master release.
+        release.
         Several attributes might be set to 'None' if nothing is available for
         that song in the database.
 
         """
-        release = discogs.MasterRelease(self.release_id)
+        release = discogs.Release(self.release_id)
+        if __debug__:
+            print 'Looking up release data.'
         release_data = release.data
         genre = 'None'
         style = 'None'
@@ -156,7 +160,6 @@ class Song(object):
         print 'SensMe {}'.format(self.sens_me_values)
 
 
-
 def distance_genres(genre1, genre2):
     """
     Calculates the distance between two musical genres according to their
@@ -182,6 +185,7 @@ def distance_genres(genre1, genre2):
         return -1.0
     return np.linalg.norm(np.array(GENRES[genre1]) - np.array(GENRES[genre2]))
 
+
 def distance_styles(style1, style2):
     """
     Calculates the distance between two musical styles according to their
@@ -206,6 +210,7 @@ def distance_styles(style1, style2):
     if style1 == 'None' or style2 == 'None':
         return -1.0
     return np.linalg.norm(np.array(STYLES[style1]) - np.array(STYLES[style2]))
+
 
 def distance_countries(country1, country2):
     """
@@ -240,6 +245,7 @@ def distance_countries(country1, country2):
         raise Exception('Could not geocode the country name.')
     return vincenty(coordinates1, coordinates2).m
 
+
 def distance_years(year1, year2):
     """
     Calculates the distance between two years, expressed in years.
@@ -261,6 +267,7 @@ def distance_years(year1, year2):
         raise Exception('Given second year is not an integer.')
     return year1 - year2
 
+
 def distance_tempos(tempo1, tempo2):
     """
     Calculates the distance between two tempos.
@@ -281,6 +288,7 @@ def distance_tempos(tempo1, tempo2):
     if not isinstance(tempo2, int):
         raise Exception('Given second tempo is not an integer.')
     return tempo1 - tempo2
+
 
 def distance_sens_me(sens_me1, sens_me2):
     """
@@ -309,6 +317,7 @@ def distance_sens_me(sens_me1, sens_me2):
             number of coordinates.')
     return np.linalg.norm(np.array(sens_me1)-np.array(sens_me2))
 
+
 def distance_songs(song1, song2):
     """
     Calculates the distance between the given songs.
@@ -329,22 +338,19 @@ def distance_songs(song1, song2):
         raise Exception('Given first song is not a song object.')
     if not isinstance(song2, Song):
         raise Exception('Given second song is not a song object.')
-    distance_set = {'distance_genre': distance_genres(song1.genre, \
-                                                        song2.genre),
-                    'distance_style': distance_styles(song1.style, \
-                                                        song2.style),
-                    'distance_country': distance_countries(song1.country, \
-                                                        song2.country),
-                    'distance_year': distance_years(song1.year, \
-                                                        song2.year),
-                    'distance_tempo': distance_tempos(song1.tempo, \
-                                                        song2.tempo),
-                    'distance_sens_me': distance_sens_me(song1.sens_me_values, \
-                                                        song2.sens_me_values),
+    distance_set = {'distance_genre': distance_genres(song1.genre,
+                    song2.genre),
+                    'distance_style': distance_styles(song1.style,
+                    song2.style),
+                    'distance_country': distance_countries(song1.country,
+                    song2.country),
+                    'distance_year': distance_years(song1.year, song2.year),
+                    'distance_tempo': distance_tempos(song1.tempo,
+                    song2.tempo),
+                    'distance_sens_me': distance_sens_me(song1.sens_me_values,
+                      song2.sens_me_values),
                     }
     return distance_set
-
-
 
 
 # Musical Genres
@@ -365,7 +371,7 @@ GENRES = {'Rock': (0.0, 0.0),
           'Blues': (0.0, 0.0),
           'Children\'s': (0.0, 0.0),
           'Brass & Military': (0.0, 0.0),
-        }
+          }
 
 
 # Musical Styles
@@ -699,4 +705,4 @@ STYLES = {'Soundtrack': (0.0, 0.0),
           'Viking Metal': (0.0, 0.0),
           'Zouk': (0.0, 0.0),
           'Éntekhno': (0.0, 0.0),
-}
+          }
